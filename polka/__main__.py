@@ -1,26 +1,38 @@
-# crm 2019 = trying out spotipy
+# crm 2019
+import core
+from user import User
 
 import os
 import sys
 import datetime
-import core
-import user
+import logging
 
 
 def main():
-    sp = core.do_auth()
-    datpath = "dat/" + str(datetime.date.today())
+    logging.basicConfig(level=os.environ.get("LOGLEVEL", "DEBUG"))
+    logger = logging.getLogger("main")
+
+    # data directory path
+    npz_dir = "dat/" + str(datetime.date.today())
+
+    # spotipy auth or client credentials flow
+    sp = core.do_auth(sys.argv[1])
+
+    # read username args and build user list
     user_list = []
     for username in sys.argv[1:]:
-        filepath = datpath + "/" + username
-        if os.path.exists(filepath):
-            u = user.load_tafs(username, filepath)
+        u = User(username)
+
+        # user load or fetch & store
+        npz_path = npz_dir + '/' + username + '.npz'
+        if os.path.exists(npz_path):
+            u.load(npz_path)
         else:
-            os.makedirs(filepath)
-            u = user.acquire_tafs(sp, username)
-            u.store_tafs(datpath)
-            u.print_tafs()
+            if not os.path.exists(npz_dir):
+                os.makedirs(npz_dir)
+            u.fetch(sp).store(npz_path)
         user_list.append(u)
+        logger.debug("User %s added to current session", u.username)
 
 
 if __name__ == "__main__":
