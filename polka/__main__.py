@@ -11,21 +11,23 @@ import logging
 def main():
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
     logger = logging.getLogger("main")
-
     date_str = datetime.datetime.now().strftime("%Y%m%d")
+
     # data directory path
     npz_dir = "dat/" + date_str
 
     # spotipy auth or client credentials flow
-    sp = core.do_auth(sys.argv[1])
     username = sys.argv[1]
-    dest = "dw" + date_str
+    sp = core.do_auth(sys.argv[1])
+
+    # copy discover weekly
+    dest = "DW" + date_str
     core.copy_playlist(sp, username, "Discover Weekly", dest, "spotify")
-    # core.copy_playlist(sp, "Discover Weekly", str("dw" + datetime.date.today())
 
     # read username args and build user list
     user_list = []
     for username in sys.argv[1:]:
+
         # user load or fetch & store
         npz_path = npz_dir + '/' + username + '.npz'
         if os.path.exists(npz_path):

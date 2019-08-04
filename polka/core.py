@@ -27,7 +27,7 @@ def copy_playlist(sp, username, source_pl_name, dest_pl_name, owner=None):
                 # retrieve tracks from first matching playlist only
                 if playlist['name'] == source_pl_name and playlist['owner']['id'] == owner and len(tracks_id) == 0:
                     logger.debug("%s     %s", playlist['name'], playlist['owner']['id'])
-                    pprint.pprint(playlist)
+                    # pprint.pprint(playlist)
                     try:
                         result_playlist = sp.user_playlist(username, playlist['id'], fields="tracks,next")
                     except SpotifyException:
