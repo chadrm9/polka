@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 from user import User
 
 # use spotipy instance to make a copy a user's playlist
+# TODO possible refactoring
 def copy_playlist(sp, username, source_pl_name, dest_pl_name, owner=None):
     tracks_id = []
     if not owner:
@@ -65,8 +66,10 @@ def copy_playlist(sp, username, source_pl_name, dest_pl_name, owner=None):
 
 # use spotipy instance to fetch data including
 # audio features as three lists (integers, floats, strings)
-# returns new User
+# returns new User TODO possible refactoring
 def fetch_user(sp, username):
+    logger.info("Fetching user %s", username)
+    playlist_count = 0
     tracks_af = []
     try:
         playlists = sp.user_playlists(username, limit=50)
@@ -74,7 +77,7 @@ def fetch_user(sp, username):
         logger.exception("Can't fetch public playlists for " + username)
     while playlists:
         for playlist in playlists['items']:
-
+            playlist_count += 1
             # retreive tracks of relevant playlists
             if playlist['owner']['id'] == username:
                 try:
@@ -124,8 +127,34 @@ def fetch_user(sp, username):
         # tracks count sanity check before numpy array setters
         if not len(tracks_af_int) == len(tracks_af_float) == len(tracks_af_str):
             logger.error("Audio feature track counts not equal")
+        logger.info("Retrieved %d tracks in %d public playlists", len(tracks_af_int), playlist_count)
         return User(username, tracks_af_int, tracks_af_float, tracks_af_str)
 
+# read username lines from file, load existing users and fetch new ones
+# returns User list
+def fetch_user_list(sp, list_path, npz_dir):
+    user_list = []
+    if os.path.exists(list_path):
+        with open(list_path) as lp:
+            for line in lp:
+                username = line.strip()
+                npz_path = os.path.join(npz_dir, username + '.npz')
+
+                # load or fetch + store then append
+                if os.path.exists(npz_path):
+                    u = load_user(npz_path)
+                else:
+                    u = fetch_user(sp, username)
+
+                    # make any missing intermediate directories
+                    if not os.path.exists(npz_dir):
+                        os.makedirs(npz_dir)
+
+                    u.store(npz_path)
+                user_list.append(u)
+    else:
+        logger.error("Can't read user list file '%s'", filepath)
+    return user_list
 
 # load user from npz file path
 # returns new User
@@ -134,6 +163,22 @@ def load_user(npz_path):
     username = os.path.basename(npz_path).rsplit('.', 1)[0]
     logger.info("Loaded %s from %s", username, npz_path)
     return User(username, npz_file['np_tracks_af_int'], npz_file['np_tracks_af_float'], npz_file['np_tracks_af_str'], npz_path)
+
+# load all users from npz folder
+# returns User list
+def load_user_dir(npz_dir):
+    user_list = []
+    if os.path.exists(npz_dir):
+        for filename in os.listdir(npz_dir):
+            if filename.endswith(".npz"):
+                username = os.path.splitext(filename)[0]
+                npz_path = os.path.join(npz_dir, filename)
+                u = core.load_user(npz_path)
+                user_list.append(u)
+                logger.info("User %s loaded from %s", username, npz_dir)
+    else:
+        logger.error("Can't load npz directory '%s'", npz_dir)
+    return user_list
 
 # do oauth2 authorization or client credentials flow
 def do_auth(username=""):
