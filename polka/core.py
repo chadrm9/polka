@@ -184,7 +184,7 @@ def load_user_dir(npz_dir):
 def do_auth(username=""):
     token = None
     if username:
-        scope = "playlist-read-collaborative playlist-modify-public playlist-read-private"
+        scope = "playlist-read-collaborative playlist-modify-public"
         token = prompt_for_user_token(username, scope)
         if not token:
             logger.warn("Can't authorize %s", username)
