@@ -1,2 +1,104 @@
 Polka
 =====
+This project makes use of `Spotipy <https://github.com/plamere/spotipy>`_, a light-weight 
+Python client for the `Spotify Web API <https://developer.spotify.com/documentation/web-api/>`_.
+
+Polka can retrieve and store spotify user data (e.g. track audio features) as `NumPy <https://numpy.org/>`_
+matricies for use with `SciPy <https://www.scipy.org/>`_.
+
+This documentation will be updated as analysis progresses and development continues.
+
+Examples
+--------
+
+* Copy a playlist
+
+	#. Create a Spotipy instance with an
+	   `authorization token <https://spotipy.readthedocs.io/en/latest/#authorization-code-flow>`_
+	   for privileged access. Write access is neccessary to create a new playlist ::
+
+		sp = core.do_auth(username)
+
+	#. Call copy_playlist(). This function returns a Spotify snapshot reference. ::
+
+		ss = core.copy_playlist(sp, username, source_playlist_name, destination_playlist_name, owner)
+
+
+* Fetch all public playlists' tracks' audio features for list of users:
+
+	#. Create a Spotipy instance with only
+	   `client credentials <https://spotipy.readthedocs.io/en/latest/#client-credentials-flow>`_
+	   for public user playlist access::
+
+		sp = core.do_auth()
+
+	#. Call fetch_user_list(). This function returns a list of User objects ::
+
+		list = core.fetch_user_list(sp, list_path, npz_dir)
+
+Each User object contains 18 aspects in 3 numpy arrays to comprise the total
+`audio feature set <https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/>`_
+for each track, separated by dtype. ::
+
+	np_tracks_af_int [4]
+		duration_ms
+		key
+		mode
+		time_signature
+		
+	np_track_af_float [9]
+		acousticness
+		danceability
+		energy
+		instrumentalness
+		liveness
+		loudness
+		speechiness
+		tempo
+		valence
+
+	np_track_af_str [5]
+		analysis_url
+		id
+		track_href
+		type
+		uri
+
+These are `saved <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savez.html>`_
+to and `loaded <https://docs.scipy.org/doc/numpy/reference/generated/numpy.load.html>`_
+from disk as a single, uncompressed .npz file which contains them as 3 variables in .npy format.
+
+Original `project structure <https://www.kennethreitz.org/essays/repository-structure-and-python>`_
+was referenced from `navdeep-G/samplemod <https://github.com/navdeep-G/samplemod>`_ and now uses `pipenv <https://github.com/pypa/pipenv>`_.
+
+Notes
+-----
+Spotipy's `SpotifyClientCredentials <https://spotipy.readthedocs.io/en/latest/#client-credentials-flow>`_
+class is suitable for accessing public playlists by username and uses these environment variables:
+
+* CLIENT_ID
+* CLIENT_SECRET
+* REDIRECT_URI
+
+User account authorization for accessing profile data or write access is tokenized with the following 
+`scope <https://developer.spotify.com/documentation/general/guides/scopes/>`_:
+
+* playlist-read-collaborative
+	Include collaborative playlists when requesting a user's playlists.
+
+* playlist-modify-public
+	 Write access to a user's public playlists. 
+
+Further reading
+---------------
+`Spotipy Docs <https://spotipy.readthedocs.io/en/latest/>`_
+
+`Spotify Docs <https://developer.spotify.com/documentation/web-api/>`_
+
+`SciPy Stack <https://www.scipy.org/docs.html>`_
+
+`NumPy Manual <https://www.numpy.org/devdocs/>`_
+
+`Pipenv Docs <https://docs.pipenv.org/en/latest/>`_
+
+`Repository Structure and Python <https://www.kennethreitz.org/essays/repository-structure-and-python>`_
