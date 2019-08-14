@@ -1,12 +1,10 @@
 # crm 2019
-import core
-from user import User
-
 import os
 import sys
 import datetime
 import logging
 
+import core
  
 def main():
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))

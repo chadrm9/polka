@@ -4,13 +4,14 @@ from spotipy.oauth2 import SpotifyClientCredentials
 from spotipy.client import SpotifyException
 import spotipy
 
+from user import User
+
 import os
 import numpy as np
 import pprint
 import logging
 logger = logging.getLogger(__name__)
 
-from user import User
 
 # use spotipy instance to make a copy a user's playlist
 # TODO possible refactoring
@@ -153,7 +154,7 @@ def fetch_user_list(sp, list_path, npz_dir):
                     u.store(npz_path)
                 user_list.append(u)
     else:
-        logger.error("Can't read user list file '%s'", filepath)
+        logger.error("Can't read user list file '%s'", list_path)
     return user_list
 
 # load user from npz file path
