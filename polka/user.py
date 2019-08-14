@@ -1,9 +1,11 @@
 # crm 2019
+import logging
+
 from spotipy.client import SpotifyException
 import numpy as np
 
-# import pprint
-import logging
+# set global numpy print options
+np.set_printoptions(suppress=True, linewidth=160, formatter={"int_kind": lambda x: "%6d" % x, "float_kind": lambda x: "%08.4f" % x})
 
 
 # logger attribute metaclass
@@ -86,10 +88,8 @@ class User(LoggedClass):
 
     # legibly print interesting feature matrix
     def print_af(self):
-        # set global numpy print options
-        np.set_printoptions(suppress=True, linewidth=160, formatter={"int_kind": lambda x: "%6d" % x, "float_kind": lambda x: "%08.4f" % x})
         for r in range(0, self.tracks_count):
-            print(self.np_tracks_af_int[r], self.np_tracks_af_float[r], self.np_tracks_af_str[r][0])
+            print(self.np_tracks_af_int[r], self.np_tracks_af_float[r])
         return self
 
     # store user to npz file path and set user's npz_path

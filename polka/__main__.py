@@ -1,7 +1,5 @@
 # crm 2019
 import os
-import sys
-import datetime
 import logging
 
 import core
