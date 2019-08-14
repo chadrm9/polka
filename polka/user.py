@@ -66,7 +66,7 @@ class User(LoggedClass):
 
     @np_tracks_af_int.setter
     def np_tracks_af_int(self, x):
-        self._np_tracks_af_int = np.recarray(x, names=['duration_ms', 'key', 'mode', 'time_signature'])
+        self._np_tracks_af_int = np.array(x)
 
     # np_tracks_af_float
     @property
@@ -75,9 +75,7 @@ class User(LoggedClass):
 
     @np_tracks_af_float.setter
     def np_tracks_af_float(self, x):
-        self._np_tracks_af_float = np.recarray(x, names=['acousticness', 'danceability', 'energy',
-														 'instrumentalness', 'liveness', 'loudness',
-														 'speechiness', 'valence', 'tempo'])
+        self._np_tracks_af_float = np.array(x)
 
     # np_tracks_af_str
     @property
@@ -86,7 +84,7 @@ class User(LoggedClass):
 
     @np_tracks_af_str.setter
     def np_tracks_af_str(self, x):
-        self._np_tracks_af_str = np.recarray(x, names=['id', 'uri', 'track_href', 'analysis_url', 'type'])
+        self._np_tracks_af_str = np.array(x)
 
     # legibly print interesting feature matrix
     def print_af(self):
