@@ -15,7 +15,7 @@ Examples
 
 	#. Create a Spotipy instance with an
 	   `authorization token <https://spotipy.readthedocs.io/en/latest/#authorization-code-flow>`_
-	   for privileged access. Write access is neccessary to create a new playlist ::
+	   for privileged access. Write access is neccessary to create a new playlist. ::
 
 		sp = core.do_auth(username)
 
