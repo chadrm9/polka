@@ -40,13 +40,13 @@ Each User object contains 18 aspects in 3 homogeneous numpy arrays to comprise t
 `audio feature set <https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/>`_
 for each track, separated by dtype. ::
 
-	np_tracks_af_int (int64)[4]
+	np_af_int (int64)[4]
 		duration_ms
 		key
 		mode
 		time_signature
 		
-	np_track_af_float (float64)[9]
+	np_af_flt (float64)[9]
 		acousticness
 		danceability
 		energy
@@ -57,7 +57,7 @@ for each track, separated by dtype. ::
 		tempo
 		valence
 
-	np_track_af_str (U64)[5]
+	np_af_str (U64)[5]
 		analysis_url
 		id
 		track_href

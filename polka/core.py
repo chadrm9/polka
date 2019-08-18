@@ -117,19 +117,19 @@ def fetch_user(sp, username):
 
         # split features to dtype lists
         tracks_af_int = []
-        tracks_af_float = []
+        tracks_af_flt = []
         tracks_af_str = []
         for track in tracks_af:
             tracks_af_int.append((track['duration_ms'], track['key'], track['mode'], track['time_signature']))
-            tracks_af_float.append((track['acousticness'], track['danceability'], track['energy'], track['instrumentalness'], track['liveness'],
-                                    track['loudness'], track['speechiness'], track['valence'], track['tempo']))
+            tracks_af_flt.append((track['acousticness'], track['danceability'], track['energy'], track['instrumentalness'], track['liveness'],
+                                  track['loudness'], track['speechiness'], track['valence'], track['tempo']))
             tracks_af_str.append((track['id'], track['uri'], track['track_href'], track['analysis_url'], track['type']))
 
         # tracks count sanity check before numpy array setters
-        if not len(tracks_af_int) == len(tracks_af_float) == len(tracks_af_str):
+        if not len(tracks_af_int) == len(tracks_af_flt) == len(tracks_af_str):
             logger.error("Audio feature track counts not equal")
         logger.info("Retrieved %d tracks in %d public playlists", len(tracks_af_int), playlist_count)
-        return User(username, tracks_af_int, tracks_af_float, tracks_af_str)
+        return User(username, tracks_af_int, tracks_af_flt, tracks_af_str)
 
 # read username lines from file, load existing users and fetch new ones
 # returns User list
@@ -163,7 +163,7 @@ def load_user(npz_path):
     npz_file = np.load(npz_path)
     username = os.path.basename(npz_path).rsplit('.', 1)[0]
     logger.info("Loaded %s from %s", username, npz_path)
-    return User(username, npz_file['np_tracks_af_int'], npz_file['np_tracks_af_float'], npz_file['np_tracks_af_str'], npz_path)
+    return User(username, npz_file['np_af_int'], npz_file['np_af_flt'], npz_file['np_af_str'], npz_path)
 
 # load all users from npz folder
 # returns User list
