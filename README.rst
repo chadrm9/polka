@@ -6,7 +6,19 @@ Python client for the `Spotify Web API <https://developer.spotify.com/documentat
 Polka can retrieve and store spotify user data (e.g. track audio features) as `NumPy <https://numpy.org/>`_
 matricies for use with `SciPy <https://www.scipy.org/>`_.
 
-This documentation will be updated as analysis progresses and development continues.
+`Pandas <https://pandas.pydata.org/>`_ cannot readily create spider/radar charts for multidimensional data
+so I have repurposed this `matplotlib demo <https://matplotlib.org/gallery/specialty_plots/radar_chart.html>`_
+to chart mean `audio features <https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/>`_ for multiple users.
+
+***** *This document will be updated as analysis progresses and development continues. (2019-08-19)*
+
+Sample chart
+------------
+
+Mean track `audio features <https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/>`_
+(excluding loudness and tempo) for 4 users in `Jupyter <https://jupyter.org/>`_ notebook:
+
+.. image:: images/Screenshot_2019-08-19_10-48-01.png
 
 Examples
 --------
@@ -69,7 +81,8 @@ to and `loaded <https://docs.scipy.org/doc/numpy/reference/generated/numpy.load.
 from disk as a single, uncompressed .npz file which contains them as 3 variables in .npy format.
 
 Original `project structure <https://www.kennethreitz.org/essays/repository-structure-and-python>`_
-was referenced from `navdeep-G/samplemod <https://github.com/navdeep-G/samplemod>`_ and now uses `pipenv <https://github.com/pypa/pipenv>`_.
+was referenced from `navdeep-G/samplemod <https://github.com/navdeep-G/samplemod>`_ and now uses 
+`pipenv <https://github.com/pypa/pipenv>`_.
 
 Notes
 -----
@@ -102,3 +115,7 @@ Further reading
 `Pipenv Docs <https://docs.pipenv.org/en/latest/>`_
 
 `Repository Structure and Python <https://www.kennethreitz.org/essays/repository-structure-and-python>`_
+
+`Project Jupyter Docs <https://jupyter.org/documentation>`_
+
+`Matplotlib Radar/Spider/Star Chart <https://matplotlib.org/gallery/specialty_plots/radar_chart.html>`_
