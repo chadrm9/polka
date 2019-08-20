@@ -20,7 +20,7 @@ def copy_playlist(sp, username, source_pl_name, dest_pl_name, owner=None):
     if not owner:
         owner = username
     try:
-        playlists = sp.current_user_playlists(limit=50)
+        playlists = sp.current_user_playlists()
     except SpotifyException:
         logger.exception("Can't fetch private playlists for " + username)
     while playlists:
@@ -29,11 +29,12 @@ def copy_playlist(sp, username, source_pl_name, dest_pl_name, owner=None):
                 # retrieve tracks from first matching playlist only
                 if playlist['name'] == source_pl_name and playlist['owner']['id'] == owner and len(tracks_id) == 0:
                     logger.debug("%s     %s", playlist['name'], playlist['owner']['id'])
-                    # pprint.pprint(playlist)
+
                     try:
                         result_playlist = sp.user_playlist(username, playlist['id'], fields="tracks,next")
                     except SpotifyException:
                         logger.exception("Can't fetch private playlist %s (%s) for %s", playlist['name'], playlist['id'], username)
+
                     result_tracks = result_playlist['tracks']
 
                     # accumulate track ids
@@ -73,14 +74,15 @@ def fetch_user(sp, username):
     playlist_count = 0
     tracks_af = []
     try:
-        playlists = sp.user_playlists(username, limit=50)
+        playlists = sp.user_playlists(username)
     except SpotifyException:
         logger.exception("Can't fetch public playlists for " + username)
     while playlists:
         for playlist in playlists['items']:
-            playlist_count += 1
+
             # retreive tracks of relevant playlists
             if playlist['owner']['id'] == username:
+                playlist_count += 1
                 try:
                     result_playlist = sp.user_playlist(username, playlist['id'], fields="tracks,next")
                 except SpotifyException:
@@ -107,7 +109,6 @@ def fetch_user(sp, username):
 
         # check for more playlists
         if playlists['next']:
-            # break
             try:
                 playlists = sp.next(playlists)
             except SpotifyException:
@@ -115,21 +116,21 @@ def fetch_user(sp, username):
         else:
             playlists = None
 
-        # split features to dtype lists
-        tracks_af_int = []
-        tracks_af_flt = []
-        tracks_af_str = []
-        for track in tracks_af:
-            tracks_af_int.append((track['duration_ms'], track['key'], track['mode'], track['time_signature']))
-            tracks_af_flt.append((track['acousticness'], track['danceability'], track['energy'], track['instrumentalness'], track['liveness'],
-                                  track['loudness'], track['speechiness'], track['valence'], track['tempo']))
-            tracks_af_str.append((track['id'], track['uri'], track['track_href'], track['analysis_url'], track['type']))
+    # split features to dtype lists
+    tracks_af_int = []
+    tracks_af_flt = []
+    tracks_af_str = []
+    for track in tracks_af:
+        tracks_af_int.append((track['duration_ms'], track['key'], track['mode'], track['time_signature']))
+        tracks_af_flt.append((track['acousticness'], track['danceability'], track['energy'], track['instrumentalness'], track['liveness'],
+                              track['loudness'], track['speechiness'], track['valence'], track['tempo']))
+        tracks_af_str.append((track['id'], track['uri'], track['track_href'], track['analysis_url'], track['type']))
 
-        # tracks count sanity check before numpy array setters
-        if not len(tracks_af_int) == len(tracks_af_flt) == len(tracks_af_str):
-            logger.error("Audio feature track counts not equal")
-        logger.info("Retrieved %d tracks in %d public playlists", len(tracks_af_int), playlist_count)
-        return User(username, tracks_af_int, tracks_af_flt, tracks_af_str)
+    # tracks count sanity check before numpy array setters
+    if not len(tracks_af_int) == len(tracks_af_flt) == len(tracks_af_str):
+        logger.error("Audio feature track counts not equal")
+    logger.info("Retrieved %d tracks in %d public playlists", len(tracks_af_int), playlist_count)
+    return User(username, tracks_af_int, tracks_af_flt, tracks_af_str)
 
 # read username lines from file, load existing users and fetch new ones
 # returns User list
