@@ -10,7 +10,7 @@ matricies for use with `SciPy <https://www.scipy.org/>`_.
 so I have repurposed this `matplotlib demo <https://matplotlib.org/gallery/specialty_plots/radar_chart.html>`_
 to chart mean `audio features <https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/>`_ for multiple users.
 
-***** *This document will be updated as analysis progresses and development continues. (2019-08-22)*
+***** *This document will be updated as analysis progresses and development continues. (2019-08-23)*
 
 Sample chart
 ------------
@@ -18,7 +18,7 @@ Sample chart
 Mean track `audio features <https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/>`_
 (excluding loudness and tempo) for 4 users in `Jupyter <https://jupyter.org/>`_ notebook:
 
-.. image:: images/Screenshot_2019-08-22_08-29-11.png
+.. image:: images/20190823_radar.png
 
 Examples
 --------
