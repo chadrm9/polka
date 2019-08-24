@@ -2,8 +2,6 @@
 import os
 import logging
 
-import core
-
 
 def main():
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
