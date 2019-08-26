@@ -26,8 +26,9 @@ def copy_playlist(sp, username, source_pl_name, dest_pl_name, owner=None):
     while playlists:
         for playlist in playlists['items']:
 
-                # retrieve tracks from first matching playlist only
-                if playlist['name'] == source_pl_name and playlist['owner']['id'] == owner and len(tracks_id) == 0:
+                # retrieve tracks from matching playlist(s)
+                # could also check len(tracks_id) == 0 for first match only
+                if playlist['name'] == source_pl_name and playlist['owner']['id'] == owner:
                     logger.debug("%s     %s", playlist['name'], playlist['owner']['id'])
 
                     try:
@@ -57,7 +58,7 @@ def copy_playlist(sp, username, source_pl_name, dest_pl_name, owner=None):
 
     # create new playlist and copy tracks
     try:
-        playlist = sp.user_playlist_create(username, dest_pl_name)
+        playlist = sp.user_playlist_create(username, dest_pl_name, public=False)
     except SpotifyException:
         logger.exception("Can't create playlist %s for %s", dest_pl_name, username)
     try:
@@ -186,7 +187,7 @@ def load_user_dir(npz_dir):
 def do_auth(username=""):
     token = None
     if username:
-        scope = "playlist-read-collaborative playlist-modify-public"
+        scope = "playlist-read-collaborative playlist-modify-public playlist-modify-private playlist-read-private"
         token = prompt_for_user_token(username, scope)
         if not token:
             logger.warn("Can't authorize %s", username)
