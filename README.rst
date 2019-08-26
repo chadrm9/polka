@@ -7,10 +7,10 @@ Polka can retrieve and store spotify user data (e.g. track audio features) as `N
 matricies for use with `SciPy <https://www.scipy.org/>`_.
 
 `Pandas <https://pandas.pydata.org/>`_ cannot readily create spider/radar charts for multidimensional data
-so I have repurposed this `matplotlib demo <https://matplotlib.org/gallery/specialty_plots/radar_chart.html>`_
+so I have implemented this `matplotlib demo <https://matplotlib.org/gallery/specialty_plots/radar_chart.html>`_
 to chart mean `audio features <https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/>`_ for multiple users.
 
-***** *This document will be updated as analysis progresses and development continues. (2019-08-23)*
+***** *This document will be updated as analysis progresses and development continues. (2019-08-26)*
 
 Sample chart
 ------------
@@ -18,7 +18,7 @@ Sample chart
 Mean track `audio features <https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/>`_
 (excluding loudness and tempo) for 4 users in `Jupyter <https://jupyter.org/>`_ notebook:
 
-.. image:: images/20190823_radar.png
+.. image:: images/20190826_radar.png
 
 Examples
 --------
