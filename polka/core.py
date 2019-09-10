@@ -12,9 +12,98 @@ import pprint
 import logging
 logger = logging.getLogger(__name__)
 
+# copy tracks from source_pl_names array to dest_pl_name
+# this function will replace and expand upon copy_playlist()
+# TODO add optional owner, destination create scope, duplicate track removal
+def copy_tracks(sp, username, src_pl_names, dst_pl_name):
+    src_track_ids = []
+    dst_pl_uri = ''
 
-# use spotipy instance to make a copy a user's playlist
-# TODO possible refactoring
+    # accumulate track ids from source playlist names
+    for src_pl in src_pl_names:
+        found = False
+        try:
+            playlists = sp.current_user_playlists()
+        except SpotifyException:
+            logger.exception("Can't fetch user playlists for " + username)
+        while playlists:
+            for playlist in playlists['items']:
+
+                # retrieve tracks from matching playlist(s)
+                if playlist['name'] == src_pl:
+                    found = True
+                    logger.debug("%s     %s", playlist['name'])
+
+                    try:
+                        result_playlist = sp.user_playlist(username, playlist['id'], fields="tracks,next")
+                    except SpotifyException:
+                        logger.exception("Can't fetch user playlist %s (%s) for %s", playlist['name'], playlist['id'], username)
+
+                    result_tracks = result_playlist['tracks']
+
+                    # accumulate track ids
+                    for t in result_tracks['items']:
+                        src_track_ids.append(t['track']['id'])
+                        logger.debug("  %s     %s", t['track']['artists'][0]['name'], t['track']['name'])
+
+                    # check for more tracks
+                    while result_tracks['next']:
+                        try:
+                            result_tracks = sp.next(result_tracks)
+                        except SpotifyException:
+                            logger.exception("Can't fetch next tracks of user playlist %s (%s) for %s", playlist['name'], playlist['id'], username)
+
+            # check for more playlists
+            if (not playlists['next']) or found == True:
+                playlists = None
+            else:
+                playlists = sp.next(playlists)
+
+    # if destination playlist exists, get uri
+    try:
+        playlists = sp.current_user_playlists()
+    except SpotifyException:
+        logger.exception("Can't fetch user playlists for " + username)
+    while playlists:
+        for playlist in playlists['items']:
+
+            # retrieve tracks from matching playlist(s)
+            if playlist['name'] == dst_pl_name:
+                logger.debug("%s     %s", playlist['name'])
+
+                try:
+                    result_playlist = sp.user_playlist(username, playlist['id'], fields="uri")
+                except SpotifyException:
+                    logger.exception("Can't fetch user playlist %s (%s) for %s", playlist['name'], playlist['id'], username)
+
+                dst_pl_uri = result_playlist['uri']
+
+        # check for more playlists or found
+        if (not playlists['next']) or dst_pl_name != '':
+            playlists = None
+        else:
+            playlists = sp.next(playlists)
+
+    # if destination playlist DNE, create and get uri
+    if dst_pl_uri == '':
+        try:
+            playlist = sp.user_playlist_create(username, dst_pl_name, public=False)
+            logger.info("Playlist %s created for %s", dst_pl_name, username)
+            dst_pl_uri = playlist['uri']
+        except SpotifyException:
+            logger.exception("Can't create playlist %s for %s", dst_pl_name, username)
+
+    # TODO efficiently remove duplicate tracks here
+
+    # finally add tracks
+    try:
+        results = sp.user_playlist_add_tracks(username, dst_pl_uri, src_track_ids)
+        logger.info("%d tracks copied to %s for %s", len(src_track_ids), dst_pl_name, username)
+    except SpotifyException:
+        logger.exception("Can't add tracks to playlist %s for %s", dst_pl_name, username)
+
+# use spotipy instance to make a copy of a user's playlist
+# TODO remove when copy_tracks() is completed
 def copy_playlist(sp, username, source_pl_name, dest_pl_name, owner=None):
     tracks_id = []
     if not owner:
@@ -26,29 +115,29 @@ def copy_playlist(sp, username, source_pl_name, dest_pl_name, owner=None):
     while playlists:
         for playlist in playlists['items']:
 
-                # retrieve tracks from matching playlist(s)
-                # could also check len(tracks_id) == 0 for first match only
-                if playlist['name'] == source_pl_name and playlist['owner']['id'] == owner:
-                    logger.debug("%s     %s", playlist['name'], playlist['owner']['id'])
+            # retrieve tracks from matching playlist(s)
+            # could also check len(tracks_id) == 0 for first match only
+            if playlist['name'] == source_pl_name and playlist['owner']['id'] == owner:
+                logger.debug("%s     %s", playlist['name'], playlist['owner']['id'])
 
+                try:
+                    result_playlist = sp.user_playlist(username, playlist['id'], fields="tracks,next")
+                except SpotifyException:
+                    logger.exception("Can't fetch private playlist %s (%s) for %s", playlist['name'], playlist['id'], username)
+
+                result_tracks = result_playlist['tracks']
+
+                # accumulate track ids
+                for t in result_tracks['items']:
+                    tracks_id.append(t['track']['id'])
+                    logger.debug("  %s     %s", t['track']['artists'][0]['name'], t['track']['name'])
+
+                # check for more tracks
+                while result_tracks['next']:
                     try:
-                        result_playlist = sp.user_playlist(username, playlist['id'], fields="tracks,next")
+                        result_tracks = sp.next(result_tracks)
                     except SpotifyException:
-                        logger.exception("Can't fetch private playlist %s (%s) for %s", playlist['name'], playlist['id'], username)
-
-                    result_tracks = result_playlist['tracks']
-
-                    # accumulate track ids
-                    for t in result_tracks['items']:
-                        tracks_id.append(t['track']['id'])
-                        logger.debug("  %s     %s", t['track']['artists'][0]['name'], t['track']['name'])
-
-                    # check for more tracks
-                    while result_tracks['next']:
-                        try:
-                            result_tracks = sp.next(result_tracks)
-                        except SpotifyException:
-                            logger.exception("Can't fetch next tracks of private playlist %s (%s) for %s", playlist['name'], playlist['id'], username)
+                        logger.exception("Can't fetch next tracks of private playlist %s (%s) for %s", playlist['name'], playlist['id'], username)
 
         # check for more playlists
         if playlists['next']:
