@@ -13,7 +13,7 @@ to chart mean `audio features <https://developer.spotify.com/documentation/web-a
 I have begun collecting my personal Discover Weekly and Release Radar playlist tracks to eventually train and test
 different data `classifiers <https://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html>`_.
 
-***** *This document will be updated as analysis progresses and development continues. (2019-08-26)*
+***** *This document will be updated as analysis progresses and development continues. (2019-09-11)*
 
 Sample chart
 ------------
@@ -30,13 +30,13 @@ Examples
 
 	#. Create a Spotipy instance with an
 	   `authorization token <https://spotipy.readthedocs.io/en/latest/#authorization-code-flow>`_
-	   for privileged access. Write access is neccessary to create a new playlist. ::
+	   for privileged access. Write access is neccessary to modify playlists. ::
 
 		sp = core.do_auth(username)
 
-	#. Call copy_playlist(). This function returns a Spotify snapshot reference. ::
+	#. Call copy_tracks(). New destinations will be created as private by default. ::
 
-		ss = core.copy_playlist(sp, username, source_playlist_name, destination_playlist_name, owner)
+		core.copy_tracks(sp, username, [source_playlist_names], destination_playlist_name, public=False)
 
 
 * Fetch all public playlists' tracks' audio features for list of users:
