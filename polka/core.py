@@ -13,10 +13,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 # copy tracks from source_pl_names array to dest_pl_name
-# this function will replace and expand upon copy_playlist()
-# TODO add optional owner, destination create scope, duplicate track removal
-def copy_tracks(sp, username, src_pl_names, dst_pl_name):
-    src_track_ids = []
+# maintain order of tracks and do not add duplicates
+# new destination playlist is created as private by default
+# TODO add optional owner, destination create scope
+def copy_tracks(sp, username, src_pl_names, dst_pl_name, public=False):
+    src_tids = []
+    dst_tids = []
     dst_pl_uri = ''
 
     # accumulate track ids from source playlist names
@@ -41,9 +43,9 @@ def copy_tracks(sp, username, src_pl_names, dst_pl_name):
 
                     result_tracks = result_playlist['tracks']
 
-                    # accumulate track ids
+                    # accumulate source track ids
                     for t in result_tracks['items']:
-                        src_track_ids.append(t['track']['id'])
+                        src_tids.append(t['track']['id'])
                         logger.debug("  %s     %s", t['track']['artists'][0]['name'], t['track']['name'])
 
                     # check for more tracks
@@ -72,11 +74,24 @@ def copy_tracks(sp, username, src_pl_names, dst_pl_name):
                 logger.debug("%s     %s", playlist['name'])
 
                 try:
-                    result_playlist = sp.user_playlist(username, playlist['id'], fields="uri")
+                    result_playlist = sp.user_playlist(username, playlist['id'], fields="uri,tracks,next")
                 except SpotifyException:
                     logger.exception("Can't fetch user playlist %s (%s) for %s", playlist['name'], playlist['id'], username)
 
                 dst_pl_uri = result_playlist['uri']
+                result_tracks = result_playlist['tracks']
+
+                # accumulate destination track ids
+                for t in result_tracks['items']:
+                    dst_tids.append(t['track']['id'])
+                    logger.debug("  %s     %s", t['track']['artists'][0]['name'], t['track']['name'])
+
+                    # check for more tracks
+                    while result_tracks['next']:
+                        try:
+                            result_tracks = sp.next(result_tracks)
+                        except SpotifyException:
+                            logger.exception("Can't fetch next tracks of user playlist %s (%s) for %s", playlist['name'], playlist['id'], username)
 
         # check for more playlists or found
         if (not playlists['next']) or dst_pl_name != '':
@@ -87,20 +102,29 @@ def copy_tracks(sp, username, src_pl_names, dst_pl_name):
     # if destination playlist DNE, create and get uri
     if dst_pl_uri == '':
         try:
-            playlist = sp.user_playlist_create(username, dst_pl_name, public=False)
+            playlist = sp.user_playlist_create(username, dst_pl_name, public=public)
             logger.info("Playlist %s created for %s", dst_pl_name, username)
             dst_pl_uri = playlist['uri']
         except SpotifyException:
             logger.exception("Can't create playlist %s for %s", dst_pl_name, username)
 
-    # TODO efficiently remove duplicate tracks here
+    # find unique source ids not in destination, maintain order
+    dst_tids_dct = dict.fromkeys(dst_tids)
+    src_tids_dct = dict.fromkeys(src_tids)
+    unq_tids = []
+    for key in src_tids_dct.keys():
+        if not key in dst_tids_dct:
+            unq_tids.append(key)
 
-    # finally add tracks
-    try:
-        results = sp.user_playlist_add_tracks(username, dst_pl_uri, src_track_ids)
-        logger.info("%d tracks copied to %s for %s", len(src_track_ids), dst_pl_name, username)
-    except SpotifyException:
-        logger.exception("Can't add tracks to playlist %s for %s", dst_pl_name, username)
+    # add tracks to destination playlist
+    if len(unq_tids) > 0:
+        try:
+            results = sp.user_playlist_add_tracks(username, dst_pl_uri, unq_tids)
+            logger.info("%d tracks copied to %s for %s", len(unq_tids), dst_pl_name, username)
+        except SpotifyException:
+            logger.exception("Can't add tracks to playlist %s for %s", dst_pl_name, username)
+    else:
+        logger.info("0 tracks copied to %s for %s", dst_pl_name, username)
 
 # use spotipy instance to make a copy of a user's playlist
 # TODO remove when copy_tracks() is completed
