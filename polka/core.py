@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 # copy tracks from source_pl_names array to dest_pl_name
 # maintain order of tracks and do not add duplicates
 # new destination playlist is created as private by default
+# returns destination playlist uri
 # TODO possible refactor
 def copy_tracks(sp, username, src_pl_names, dst_pl_name, public=False):
     src_tids = []
@@ -157,7 +158,9 @@ def copy_tracks(sp, username, src_pl_names, dst_pl_name, public=False):
             except SpotifyException:
                 logger.exception("Can't add tracks to playlist %s for %s", dst_pl_name, username)
 
-    logger.info("%d tracks copied to %s for %s", len(unq_tids), dst_pl_name, username)
+    logger.info("%d unique [%d|%d] tracks from %d playlists copied to %s for %s",
+                len(unq_tids), len(src_tids), len(dst_tids), len(src_pl_names), dst_pl_name, username)
+    return dst_pl_uri
 
 # use spotipy instance to fetch data including
 # audio features as three lists (integers, floats, strings)
