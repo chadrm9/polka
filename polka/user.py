@@ -96,5 +96,5 @@ class User(LoggedClass):
     def store(self, npz_path):
         np.savez(npz_path, np_af_int=self.np_af_int, np_af_flt=self.np_af_flt, np_af_str=self.np_af_str)
         self.npz_path = npz_path
-        self.logger.info("Stored %s to %s", self.username, npz_path)
+        self.logger.info("Stored %s to '%s'", self.username, npz_path)
         return self

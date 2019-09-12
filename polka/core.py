@@ -55,17 +55,19 @@ def copy_tracks(sp, username, src_pl_names, dst_pl_name, public=False):
                         if result_tracks['next']:
                             try:
                                 result_tracks= sp.next(result_tracks)
-                                logger.debug("Fetched next tracks of playlist %s for %s", playlist['name'], username)
                             except SpotifyException:
                                 logger.exception("Can't fetch next tracks of playlist %s for %s", playlist['name'], username)
                         else:
                             result_tracks = None
 
             # check for more playlists
-            if (not playlists['next']) or found == True:
-                playlists = None
+            if playlists['next'] and found == False:
+                try:
+                    playlists = sp.next(playlists)
+                except SpotifyException:
+                    logger.exception("Can't fetch next playlists for %s", username)
             else:
-                playlists = sp.next(playlists)
+                playlists = None
 
     # accumulate track ids from destination playlist if it exists
     try:
@@ -99,17 +101,19 @@ def copy_tracks(sp, username, src_pl_names, dst_pl_name, public=False):
                     if result_tracks['next']:
                         try:
                             result_tracks = sp.next(result_tracks)
-                            logger.debug("Fetched next tracks of playlist %s for %s", playlist['name'], username)
                         except SpotifyException:
                             logger.exception("Can't fetch next tracks of playlist %s for %s", playlist['name'], username)
                     else:
                         result_tracks = None
 
         # check for more playlists
-        if (not playlists['next']) or dst_pl_name != '':
-            playlists = None
+        if playlists['next'] and dst_pl_name != '':
+            try:
+                playlists = sp.next(playlists)
+            except SpotifyException:
+                logger.exception("Can't fetch next playlists for %s", username)
         else:
-            playlists = sp.next(playlists)
+            playlists = None
 
     # unique source track ids dictionary
     src_tids_dct = dict.fromkeys(src_tids)
@@ -158,15 +162,16 @@ def copy_tracks(sp, username, src_pl_names, dst_pl_name, public=False):
 # use spotipy instance to fetch data including
 # audio features as three lists (integers, floats, strings)
 # returns new User
-# TODO refactor
+# TODO possible refactor
 def fetch_user(sp, username):
-    logger.info("Fetching user %s", username)
     playlist_count = 0
     tracks_af = []
     try:
         playlists = sp.user_playlists(username)
     except SpotifyException:
         logger.exception("Can't fetch public playlists for " + username)
+
+    # iterate user playlists
     while playlists:
         for playlist in playlists['items']:
 
@@ -176,7 +181,8 @@ def fetch_user(sp, username):
                 try:
                     result_playlist = sp.user_playlist(username, playlist['id'], fields="tracks,next")
                 except SpotifyException:
-                    logger.exception("Can't fetch public playlist %s (%s) for %s", playlist['name'], playlist['id'], username)
+                    logger.exception("Can't fetch public playlist %s for %s", playlist['name'], username)
+
                 result_tracks = result_playlist['tracks']
 
                 # accumulate track uris
@@ -188,14 +194,14 @@ def fetch_user(sp, username):
                 try:
                     tracks_af.extend(sp.audio_features(result_uris))
                 except SpotifyException:
-                    logger.exception("Can't fetch track features of public playlist %s (%s) for %s", playlist['name'], playlist['id'], username)
+                    logger.exception("Can't fetch track features of public playlist %s for %s", playlist['name'], username)
 
                 # check for more tracks
                 while result_tracks['next']:
                     try:
                         result_tracks = sp.next(result_tracks)
                     except SpotifyException:
-                        logger.exception("Can't fetch next tracks of public playlist %s (%s) for %s", playlist['name'], playlist['id'], username)
+                        logger.exception("Can't fetch next tracks of public playlist %s for %s", playlist['name'], username)
 
         # check for more playlists
         if playlists['next']:
@@ -216,10 +222,7 @@ def fetch_user(sp, username):
                               track['loudness'], track['speechiness'], track['valence'], track['tempo']))
         tracks_af_str.append((track['id'], track['uri'], track['track_href'], track['analysis_url'], track['type']))
 
-    # tracks count sanity check before numpy array setters
-    if not len(tracks_af_int) == len(tracks_af_flt) == len(tracks_af_str):
-        logger.error("Audio feature track counts not equal")
-    logger.info("Retrieved %d tracks in %d public playlists", len(tracks_af_int), playlist_count)
+    logger.info("Retrieved %d tracks in %d public playlists for %s", len(tracks_af_int), playlist_count, username)
     return User(username, tracks_af_int, tracks_af_flt, tracks_af_str)
 
 # read username lines from file, load existing users and fetch new ones
@@ -253,7 +256,7 @@ def fetch_user_list(sp, list_path, npz_dir):
 def load_user(npz_path):
     npz_file = np.load(npz_path)
     username = os.path.basename(npz_path).rsplit('.', 1)[0]
-    logger.info("Loaded %s from %s", username, npz_path)
+    logger.info("Loaded %s from '%s'", username, npz_path)
     return User(username, npz_file['np_af_int'], npz_file['np_af_flt'], npz_file['np_af_str'], npz_path)
 
 # load all users from npz folder
@@ -267,24 +270,30 @@ def load_user_dir(npz_dir):
                 npz_path = os.path.join(npz_dir, filename)
                 u = core.load_user(npz_path)
                 user_list.append(u)
-                logger.info("User %s loaded from %s", username, npz_dir)
+                logger.info("User %s loaded from '%s'", username, npz_dir)
     else:
         logger.error("Can't load npz directory '%s'", npz_dir)
     return user_list
 
-# do oauth2 authorization or client credentials flow
+# oauth2 user authorize or client credentials flow
 def do_auth(username=""):
     token = None
+
+    # user authorization
     if username:
         scope = "playlist-read-collaborative playlist-modify-public playlist-modify-private playlist-read-private"
         token = prompt_for_user_token(username, scope)
-        if not token:
-            logger.warn("Can't authorize %s", username)
-    try:
-        sp = spotipy.Spotify(auth=token, requests_session=True, client_credentials_manager=SpotifyClientCredentials())
         if token:
             logger.info("User %s authorized!", username)
-        logger.info("Client credentialized!")
-        return sp
+        else:
+            logger.warn("Can't authorize %s!", username)
+
+    # client credentialization
+    try:
+        sp = spotipy.Spotify(auth=token, requests_session=True, client_credentials_manager=SpotifyClientCredentials())
     except SpotifyException:
-        logger.exception("Can't credentialize")
+        logger.exception("Can't credentialize!")
+
+    logger.info("Client credentialized!")
+
+    return sp
