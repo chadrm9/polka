@@ -2,11 +2,16 @@
 import os
 import logging
 
+import core
+
 
 def main():
-    # Info level from notebook, Debug level from CLI
+    # info level from notebook, debug level from CLI
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "DEBUG"))
     logger = logging.getLogger("main")
+
+    # prep CLI debugging
+    sp = core.do_auth("chadrm9")
 
 if __name__ == "__main__":
     main()
