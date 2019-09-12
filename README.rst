@@ -13,7 +13,7 @@ to chart mean `audio features <https://developer.spotify.com/documentation/web-a
 I have begun collecting my personal Discover Weekly and Release Radar playlist tracks to eventually train and test
 different data `classifiers <https://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html>`_.
 
-***** *This document will be updated as analysis progresses and development continues. (2019-09-11)*
+***** *This document will be updated as analysis progresses and development continues. (2019-09-12)*
 
 Sample chart
 ------------
