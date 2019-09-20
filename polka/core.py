@@ -151,7 +151,7 @@ def copy_tracks(sp, username, src_pl_names, dst_pl_name, public=False):
     # add unique to destination playlist
     if len(unq_tids) > 0:
 
-        # mind spotify limit of 100/req
+        # mind spotify limit of 100 tracks/request
         for i in range(0, len(unq_tids), 100):
             try:
                 results = sp.user_playlist_add_tracks(username, dst_pl_uri, unq_tids[i:i+100])
@@ -259,7 +259,7 @@ def fetch_user_list(sp, list_path, npz_dir):
 def load_user(npz_path):
     npz_file = np.load(npz_path)
     username = os.path.basename(npz_path).rsplit('.', 1)[0]
-    logger.info("Loaded %s from '%s'", username, npz_path)
+    logger.info("Loaded %s (%d tracks) from '%s'", username, len(npz_file['np_af_int']), npz_path)
     return User(username, npz_file['np_af_int'], npz_file['np_af_flt'], npz_file['np_af_str'], npz_path)
 
 # load all users from npz folder
@@ -277,6 +277,39 @@ def load_user_dir(npz_dir):
     else:
         logger.error("Can't load npz directory '%s'", npz_dir)
     return user_list
+
+# create playlst of unique tracks from loaded
+# user's public playlists, default private
+# returns created destination  playlist uri
+def aggr_user_tracks(sp, username, user_list, dst_pl_name, public=False):
+    tids = []
+    for user in user_list:
+
+        # aggregate track ids
+        tids.extend(user._np_af_str[:,0])
+
+    # make unique
+    unq_tids_dict = dict.fromkeys(tids)
+    unq_tids = list(unq_tids_dict)
+
+    # create playlist
+    try:
+        pl = sp.user_playlist_create(username, dst_pl_name, public=public)
+    except SpotifyException:
+        logger.exception("Can't create playlist %s for %s", dst_pl_name, username)
+
+    logger.info("Playlist %s created for %s", dst_pl_name, username)
+
+    # add tracks
+    for i in range(0, len(unq_tids), 100):
+        try:
+            results = sp.user_playlist_add_tracks(username, pl['uri'], unq_tids[i:i+100])
+        except:
+            logger.exception("Can't add tracks to playlist %s for %s", dst_pl_name, username)
+
+    logger.info("%d unique [%d] tracks from %d users copied to %s for %s",
+                len(unq_tids), len(tids), len(user_list), dst_pl_name, username)
+    return pl['uri']
 
 # oauth2 user authorize or client credentials flow
 def do_auth(username=""):
