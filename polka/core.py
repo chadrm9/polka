@@ -283,10 +283,11 @@ def load_user_dir(npz_dir):
 # returns created destination  playlist uri
 def aggr_user_tracks(sp, username, user_list, dst_pl_name, public=False):
     tids = []
-    for user in user_list:
 
-        # aggregate track ids
-        tids.extend(user._np_af_str[:,0])
+    # aggregate track ids
+    for user in user_list:
+        # tracks uri slice
+        tids.extend(np.array(user._np_af_str)[:,0])
 
     # make unique
     unq_tids_dict = dict.fromkeys(tids)
