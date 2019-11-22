@@ -99,3 +99,4 @@ Pipfile
 notes.txt
 dat/
 **/*.swp
+.vscode/
